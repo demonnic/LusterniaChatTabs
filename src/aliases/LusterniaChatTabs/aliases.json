@@ -1,0 +1,6 @@
+[
+  {
+    "name": "lct",
+    "regex": "^lct (save|load|font|fontSize|blink|blankLine|timestamp)(?: (.+))?$"
+  }
+]
