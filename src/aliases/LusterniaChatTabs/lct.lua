@@ -1,4 +1,4 @@
-local valid_options = {"font", "fontSize", "blink", "blankLine", "timestamp", "save", "load"}
+local valid_options = {"font", "fontSize", "blink", "blankLine", "timestamp", "save", "load", "show", "hide"}
 local valid_options_string = table.concat(valid_options)
 local option = matches[2]
 local value = matches[3]
@@ -12,6 +12,10 @@ if option == "save" then
   chatEMCO:save()
 elseif option == "load" then
   chatEMCO:load()
+elseif option == "show" then
+  LusterniaChatTabs.emcoContainer:show()
+elseif option == "hide" then
+  LusterniaChatTabs.emcoContainer:hide()
 else
   if value == nil then
     cecho("<green>LusterniaChatTabs: <reset>You need to provide a value when trying to configure things\n")

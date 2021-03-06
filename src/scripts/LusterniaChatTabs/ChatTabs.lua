@@ -83,9 +83,7 @@ local function chatCapture()
     channel = channelToTab[info.channel]
   end
   local txt = ansi2decho(info.text)
-  if channel == "Clans" then
-    txt = txt:gsub(string.char(27) .. [[.-]] .. string.char(4), "")
-  end
+  txt = txt:gsub(string.char(27) .. [[.-]] .. string.char(4), "")
   if ndb then
     txt = addNDBdecho(txt)
   end
