@@ -6,6 +6,10 @@ Will start on the right side, attached to the right border. Resize, move, adjust
 
 ## Configuration Alias
 
+* `lct hide`
+  * hides the chat tabs
+* `lct show`
+  * shows the chat tabs again.
 * `lct save`
   * saves the configuration
 * `lct load`
