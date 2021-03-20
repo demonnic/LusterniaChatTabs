@@ -18,8 +18,8 @@ jobs:
       - name: Muddle
         uses: demonnic/build-with-muddler@main
       
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: LusterniaChatTabs
-        path: build/tmp/
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: LusterniaChatTabs
+          path: build/tmp/
