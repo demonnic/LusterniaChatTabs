@@ -19,6 +19,7 @@ jobs:
           owner: demonnic
           repo: muddler
           excludes: prerelease, draft
+      
       - uses: actions/checkout@v2
     
       - name: Retrieve muddler
