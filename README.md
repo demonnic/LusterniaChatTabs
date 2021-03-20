@@ -24,3 +24,4 @@ Will start on the right side, attached to the right border. Resize, move, adjust
   * set whether it should add a timestamp at the front
 * `lct blankLine`
   * set whether it should automatically add a newline to things echoed.
+
