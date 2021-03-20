@@ -18,7 +18,7 @@ jobs:
       - name: Muddle
         uses: demonnic/build-with-muddler@determine_latest_version
         with:
-          muddlerVersion: 0.4
+          muddlerVersion: 0.6
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
