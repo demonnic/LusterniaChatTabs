@@ -1,13 +1,7 @@
 local EMCO = require("LusterniaChatTabs.emco")
 LusterniaChatTabs = LusterniaChatTabs or {}
-LusterniaChatTabs.emcoContainer = LusterniaChatTabs.emcoContainer or Adjustable.Container:new({
-  name = "LusterniaChatTabsContainer",
-  x = "-25%",
-  y = "-60%",
-  width = "25%",
-  height = "60%",
-  attached = "right",
-})
+local default_constraints = {name = "LusterniaChatTabsContainer", x = "-25%", y = "-60%", width = "25%", height = "60%", attached = "right"}
+LusterniaChatTabs.emcoContainer = LusterniaChatTabs.emcoContainer or Adjustable.Container:new(default_constraints)
 LusterniaChatTabs.chatEMCO = LusterniaChatTabs.chatEMCO or EMCO:new({
   name = "LusterniaChat",
   x = 0,
@@ -89,16 +83,17 @@ local function chatCapture()
   end
   chatEMCO:decho(channel, txt)
 end
+
 if LusterniaChatTabs.chatCaptureEventID then
   killAnonymousEventHandler(LusterniaChatTabs.chatCaptureEventID)
 end
 LusterniaChatTabs.chatCaptureEventID = registerAnonymousEventHandler("gmcp.Comm.Channel.Text", chatCapture)
+
 local function startGMCPChat()
   cecho("<green>LusterniaChatTabs:<reset> Turning on GMCP comm channels\n")
   sendGMCP([[Core.Supports.Add ["Comm.Channel 1"] ]])
-  send("\n")
-  cecho("<green>LusterniaChatTabs:<reset> GMCP comm channels should now be enabled\n")
 end
-if not LusterniaChatTabs.loginTrig then
-  LusterniaChatTabs.loginTrig = tempExactMatchTrigger("Password correct. Welcome to Lusternia.", startGMCPChat, 1)
+
+if not LusterniaChatTabs.loginHandler then
+  LusterniaChatTabs.loginHandler = registerAnonymousEventHandler("gmcp.Char.Name", startGMCPChat)
 end
