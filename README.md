@@ -2,6 +2,8 @@
 
 Set of chat tabs similarly laid out to KaiUI, but using my latest version of EMCO which provides for automatic logging among other things, and not part of an all or nothing UI.
 
+By default, the logs are kept in `getMudletHomeDir() .. "/log/Chatbox/YYYY/MM/DD/tabname.html"`
+
 Will start on the right side, attached to the right border. Resize, move, adjust how you see fit.
 
 ## Configuration Alias
