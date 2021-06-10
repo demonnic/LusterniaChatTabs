@@ -61,7 +61,7 @@ local function addNDBdecho(txt)
         color = ndb.roguescolor or mm.conf.roguescolor
         color = color or "white"
       end
-      color = string.format("<%d,%d,%d>", unpack(color))
+      color = string.format("<%d,%d,%d>", unpack(color_table[color]))
       txt = txt:gsub(name, color .. name .. format)
       done[name] = true
     end
