@@ -56,6 +56,11 @@ local function addNDBdecho(txt)
       local color = ndb.getcolor(name) or "<white>"
       color = color:gsub("<", "")
       color = color:gsub(">", "")
+      if color == "" then -- they're a rogue, most likely, since the ndb has the name but returned "" as the color
+        debugc("LusterniaChatTabs got '' from ndb.getcolor for " .. name .. ". We are assuming they are rogue and looking up the correct color in ndb.conf or mm.conf. If it can't find either it will fallback to white")
+        color = ndb.roguescolor or mm.conf.roguescolor
+        color = color or "white"
+      end
       color = string.format("<%d,%d,%d>", unpack(color_table[color]))
       txt = txt:gsub(name, color .. name .. format)
       done[name] = true
