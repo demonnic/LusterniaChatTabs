@@ -161,7 +161,7 @@ function LoggingConsole:writeToLog(str)
     if not io.exists(fileName) then
       str = htmlHeader .. str
     end
-    str = str .. "\n" -- html doesn't care about the extra whitespace, but it makes the raw file much easier to read
+    str = str
   end
   local file, err = io.open(fileName, "a")
   if not file then
@@ -434,7 +434,6 @@ function LoggingConsole:replay(numberOfLines)
         lines = lines:gsub(line .. "\n", "")
       end
     end
-    lines = lines:gsub("\n", "")
     lines = dt.html2decho(lines)
   else
     lines = ansi2decho(lines)

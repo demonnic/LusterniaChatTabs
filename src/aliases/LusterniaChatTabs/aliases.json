@@ -18,5 +18,9 @@
   {
     "name": "lct ungagmob",
     "regex": "^lct ungagmob (.+)"
+  },
+  {
+    "name": "lct gaglist",
+    "regex": "^lct gaglist$"
   }
 ]

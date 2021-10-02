@@ -6,4 +6,5 @@ if gaggedMobs[mob] then
   return
 end
 gaggedMobs[mob] = true
+LusterniaChatTabs.saveGaggedMobs()
 echo(f"Mob {mob} added to the gag list")
