@@ -7,11 +7,18 @@ local DemonTools = {}
 local cheatConsole = Geyser.MiniConsole:new({name = "DemonnicCheatConsole", width = 4000, wrapWidth = 10000, color = "black"})
 cheatConsole:hide()
 local function exists(path)
-  local ok, err, code = os.rename(path, path)
-  if not ok and code == 13 then
+  path = path:gsub([[\]], "/")
+  if path:ends("/") then
+    path = path:sub(1,-2)
+  end
+  local ok, err, code = lfs.attributes(path)
+  if ok then
     return true
   end
-  return ok, err
+  if err:lower():find("no such file or directory") then
+    return false
+  end
+  return ok, err, code
 end
 
 local function isWindows()
@@ -19,11 +26,20 @@ local function isWindows()
 end
 
 local function isDir(path)
-  path = path:gsub("\\", "/")
-  if not path:ends("/") then
-    path = path .. "/"
+  if not exists(path) then return false end
+    path = path:gsub([[\]], "/")
+  if path:ends("/") then
+    path = path:sub(1,-2)
   end
-  return exists(path)
+  local ok, err, code = lfs.attributes(path, "mode")
+  if ok then
+    if ok == "directory" then
+      return true
+    else
+      return false
+    end
+  end
+  return ok, err, code
 end
 
 local function mkdir_p(path)
@@ -88,7 +104,7 @@ local htmlHeaderPattern = [=[  <!DOCTYPE HTML PUBLIC "%-//W3C//DTD HTML 4.01 Tra
 
 -- internal function, recursively digs for a value within subtables if possible
 local function digForValue(dataFrom, tableTo)
-  if digForValue == nil or table.size(tableTo) == 0 then
+  if dataFrom == nil or table.size(tableTo) == 0 then
     return dataFrom
   else
     local newData = dataFrom[tableTo[1]]

@@ -14,6 +14,31 @@ local EMCO = Geyser.Container:new({
   fileName = "|N.|e",
   bufferSize = "100000",
   deleteLines = "1000",
+  blinkTime = 3,
+  tabFontSize = 8,
+  tabAlignment = "c",
+  fontSize = 9,
+  activeTabCSS = "",
+  inactiveTabCSS = "",
+  activeTabFGColor = "purple",
+  inactiveTabFGColor = "white",
+  activeTabBGColor = "<0,180,0>",
+  inactiveTabBGColor = "<60,60,60>",
+  consoleColor = "black",
+  tabBoxCSS = "",
+  tabBoxColor = "black",
+  consoleContainerCSS = "",
+  consoleContainerColor = "black",
+  tabHeight = 25,
+  leftMargin = 0,
+  rightMargin = 0,
+  topMargin = 0,
+  bottomMargin = 0,
+  gap = 1,
+  wrapAt = 300,
+  autoWrap = true,
+  logExclusions = {},
+  gags = {},
 })
 
 -- patch Geyser.MiniConsole if it does not have its own display method defined
@@ -307,6 +332,11 @@ end
 --     <td class="tg-odd">Number of lines to delete if a console's buffer fills up.</td>
 --     <td class="tg-odd">1000</td>
 --   </tr>
+--   <tr>
+--     <td class="tg-even">gags</td>
+--     <td class="tg-even">A table of Lua patterns you wish to gag from being added to the EMCO. Useful for removing mob says and such example: {[[^A green leprechaun says, ".*"$]], "^Bob The Dark Lord of the Keep mutters darkly to himself.$"} see <a href="http://lua-users.org/wiki/PatternsTutorial">this tutorial</a> on Lua patterns for more information.</td>
+--     <td class="tg-even">{}</td>
+--   </tr>
 -- </tbody>
 -- </table>
 -- @tparam GeyserObject container The container to use as the parent for the EMCO
@@ -318,7 +348,7 @@ function EMCO:new(cons, container)
   cons.consoles = cons.consoles or {"All"}
   if cons.mapTab then
     if not type(cons.mapTabName) == "string" then
-      self:ce(funcName, [["mapTab" is true, thus constraint "mapTabName" and string expected, got ]] .. type(cons.mapTabName))
+      self:ce(funcName, [["mapTab" is true, thus constraint "mapTabName" as string expected, got ]] .. type(cons.mapTabName))
     elseif not table.contains(cons.consoles, cons.mapTabName) then
       self:ce(funcName, [["mapTabName" must be one of the consoles contained within constraint "consoles". Valid option for tha mapTab are: ]] ..
                 table.concat(cons.consoles, ","))
@@ -396,44 +426,21 @@ function EMCO:new(cons, container)
   me.tabUnderline = me:fuzzyBoolean(cons.tabUnderline) and true or false
   me.tabBold = me:fuzzyBoolean(cons.tabBold) and true or false
   me.tabItalics = me:fuzzyBoolean(cons.tabItalics) and true or false
-  me.tabFontSize = cons.tabFontSize or 8
-  me.tabAlignment = cons.tabAlignment or "c"
-  me.blinkTime = cons.blinkTime or 3
-  me.fontSize = cons.fontSize or 9
-  me.activeTabCSS = cons.activeTabCSS or ""
-  me.inactiveTabCSS = cons.inactiveTabCSS or ""
-  me.activeTabFGColor = cons.activeTabFGColor or "purple"
-  me.inactiveTabFGColor = cons.inactiveTabFGColor or "white"
-  me.activeTabBGColor = cons.activeTabBGColor or "<0,180,0>"
-  me.inactiveTabBGColor = cons.inactiveTabBGColor or "<60,60,60>"
-  me.consoleColor = cons.consoleColor or "black"
-  me.tabBoxCSS = cons.tabBoxCSS or ""
-  me.tabBoxColor = cons.tabBoxColor or "black"
-  me.consoleContainerCSS = cons.consoleContainerCSS or ""
-  me.consoleContainerColor = cons.consoleContainerColor or "black"
   me.commandLine = me:fuzzyBoolean(cons.commandLine) and true or false
-  me.gap = cons.gap or 1
   me.consoles = cons.consoles
-  me.tabHeight = cons.tabHeight or 25
-  me.leftMargin = cons.leftMargin or 0
-  me.rightMargin = cons.rightMargin or 0
-  me.topMargin = cons.topMargin or 0
-  me.bottomMargin = cons.bottomMargin or 0
-  if cons.autoWrap == nil then
-    me.autoWrap = true
-  else
-    me.autoWrap = cons.autoWrap
-  end
   me.font = cons.font
   me.tabFont = cons.tabFont
-  me.wrapAt = cons.wrapAt or 300
   me.currentTab = ""
   me.tabs = {}
   me.tabsToBlink = {}
   me.mc = {}
-  self.blinkTimerID = tempTimer(me.blinkTime, function()
-    me:doBlink()
-  end, true)
+  if me.blink then
+    me:enableBlink()
+  end
+  me.gags = {}
+  for _,pattern in ipairs(cons.gags or {}) do
+    me:addGag(pattern)
+  end
   me:reset()
   if me.allTab then
     me:setAllTabName(me.allTabName or me.consoles[1])
@@ -647,6 +654,9 @@ function EMCO:switchTab(tabName)
   end
   self.mc[tabName]:show()
   self.currentTab = tabName
+  if oldTab ~= tabName then
+    raiseEvent("EMCO tab change", self.name, oldTab, tabName)
+  end
 end
 
 function EMCO:createComponentsForTab(tabName)
@@ -678,6 +688,9 @@ function EMCO:createComponentsForTab(tabName)
     path = self:processTemplate(self.path, tabName),
     fileName = self:processTemplate(self.fileName, tabName),
   }
+  if table.contains(self.logExclusions, tabName) then
+    windowConstraints.log = false
+  end
   local parent = self.consoleContainer
   local mapTab = self.mapTab and tabName == self.mapTabName
   if mapTab then
@@ -1251,11 +1264,20 @@ end
 --- Enables tab blinking when new information comes in to an inactive tab
 function EMCO:enableBlink()
   self.blink = true
+  if not self.blinkTimerID then
+    self.blinkTimerID = tempTimer(self.blinkTime, function()
+      self:doBlink()
+    end, true)
+  end
 end
 
 --- Disables tab blinking when new information comes in to an inactive tab
 function EMCO:disableBlink()
   self.blink = false
+  if self.blinkTimerID then
+    killTimer(self.blinkTimerID)
+    self.blinkTimerID = nil
+  end
 end
 
 --- Enables preserving the chat's background over the background of an incoming :append()
@@ -1541,6 +1563,40 @@ function EMCO:checkEchoArgs(funcName, tabName, message, excludeAll)
   end
 end
 
+--- Adds a pattern to the gag list for the EMCO
+--@tparam pattern string a Lua pattern to gag. http://lua-users.org/wiki/PatternsTutorial
+--@return true if it was added, false if it was already included.
+function EMCO:addGag(pattern)
+  if self.gags[pattern] then
+    return false
+  end
+  self.gags[pattern] = true
+  return true
+end
+
+--- Removes a pattern from the gag list for the EMCO
+--@tparam pattern string a Lua pattern to no longer gag. http://lua-users.org/wiki/PatternsTutorial
+--@return true if it was removed, false if it was not there to remove.
+function EMCO:removeGag(pattern)
+  if self.gags[pattern] then
+    self.gags[pattern] = nil
+    return true
+  end
+  return false
+end
+
+--- Checks if a string matches any of the EMCO's gag patterns
+--@tparam str string The text you're testing against the gag patterns
+--@return false if it does not match any gag patterns. true and the matching pattern if it does match.
+function EMCO:matchesGag(str)
+  for pattern,_ in pairs(self.gags) do
+    if str:match(pattern) then
+      return true, pattern
+    end
+  end
+  return false
+end
+
 function EMCO:xEcho(tabName, message, xtype, excludeAll)
   if self.mapTab and self.mapTabName == tabName then
     error("You cannot send text to the Map tab")
@@ -1550,6 +1606,12 @@ function EMCO:xEcho(tabName, message, xtype, excludeAll)
                    self.mc[self.allTabName] or false
   local ofr, ofg, ofb, obr, obg, obb
   if xtype == "a" then
+    local line = getCurrentLine()
+    local mute, reason = self:matchesGag(line)
+    if mute then
+      debugc(f"{self.name}:append(tabName) denied because current line matches the pattern '{reason}'")
+      return
+    end
     selectCurrentLine()
     ofr, ofg, ofb = getFgColor()
     obr, obg, obb = getBgColor()
@@ -1564,6 +1626,11 @@ function EMCO:xEcho(tabName, message, xtype, excludeAll)
     deselect()
     resetFormat()
   else
+    local mute, reason = self:matchesGag(message)
+    if mute then
+      debugc(f"{self.name}:{xtype}(tabName, msg, excludeAll) denied because msg matches '{reason}'")
+      return
+    end
     ofr, ofg, ofb = Geyser.Color.parse("white")
     obr, obg, obb = Geyser.Color.parse(self.consoleColor)
   end
@@ -1687,6 +1754,11 @@ end
 
 -- internal function used for handling echoLink/popup
 function EMCO:xLink(tabName, linkType, text, commands, hints, useCurrentFormat, excludeAll)
+  local gag, reason = self:matchesGag(text)
+  if gag then
+    debugc(f"{self.name}:{linkType}(tabName, text, command, hint, excludeAll) denied because text matches '{reason}'")
+    return
+  end
   local console = self.mc[tabName]
   local allTab = (self.allTab and not excludeAll and not table.contains(self.allTabExclusions, tabName) and tabName ~= self.allTabName) and
                    self.mc[self.allTabName] or false
@@ -1968,6 +2040,8 @@ function EMCO:save()
     tabAlignment = self.tabAlignment,
     bufferSize = self.bufferSize,
     deleteLines = self.deleteLines,
+    logExclusions = self.logExclusions,
+    gags = self.gags,
   }
   local dirname = getMudletHomeDir() .. "/EMCO/"
   local filename = dirname .. self.name .. ".lua"
@@ -2030,6 +2104,8 @@ function EMCO:load()
   self.tabAlignment = configTable.tabAlignment
   self.bufferSize = configTable.bufferSize
   self.deleteLines = configTable.deleteLines
+  self.logExclusions = configTable.logExclusions
+  self.gags = configTable.gags
   self:move(configTable.x, configTable.y)
   self:resize(configTable.width, configTable.height)
   self:reset()
@@ -2046,6 +2122,49 @@ function EMCO:load()
     self:enableAutoWrap()
   else
     self:disableAutoWrap()
+  end
+end
+
+--- Enables logging for tabName
+--@tparam string tabName the name of the tab you want to enable logging for
+function EMCO:enableTabLogging(tabName)
+  local console = self.mc[tabName]
+  if not console then
+    debugc(f"EMCO:enableTabLogging(tabName): tabName {tabName} not found.")
+    return
+  end
+  console.log = true
+  local logDisabled = table.index_of(self.logExclusions, tabName)
+  if logDisabled then table.remove(self.logExclusions, logDisabled) end
+end
+
+--- Disables logging for tabName
+--@tparam string tabName the name of the tab you want to disable logging for
+function EMCO:disableTabLogging(tabName)
+  local console = self.mc[tabName]
+  if not console then
+    debugc(f"EMCO:disableTabLogging(tabName): tabName {tabName} not found.")
+    return
+  end
+  console.log = false
+  local logDisabled = table.index_of(self.logExclusions, tabName)
+  if not logDisabled then table.insert(self.logExclusions, tabName) end
+end
+
+--- Enables logging on all EMCO managed consoles
+function EMCO:enableAllLogging()
+  for _,console in pairs(self.mc) do
+    console.log = true
+  end
+  self.logExclusions = {}
+end
+
+--- Disables logging on all EMCO managed consoles
+function EMCO:disableAllLogging()
+  self.logExclusions = {}
+  for tabName,console in pairs(self.mc) do
+    console.log = false
+    self.logExclusions[#self.logExclusions+1] = tabName
   end
 end
 
