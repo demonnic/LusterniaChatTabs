@@ -17,7 +17,7 @@ LusterniaChatTabs.chatEMCO = LusterniaChatTabs.chatEMCO or EMCO:new({
   deleteLines = 500,
   timestamp = true,
   fontSize = 12,
-  font = "Inconsolata",
+  font = "Ubuntu Mono",
   commandLine = true,
 }, LusterniaChatTabs.emcoContainer)
 local chatEMCO = LusterniaChatTabs.chatEMCO
@@ -26,6 +26,38 @@ if io.exists(filename) then
   chatEMCO:load()
 end
 chatEMCO:replayAll(10)
+function LusterniaChatTabs.echo(msg)
+  msg = msg or ""
+  cecho(f"<green>LusterniaChatTabs: <reset>{msg}\n")
+end
+
+LusterniaChatTabs.gaggedMobs = {}
+local gaggedMobFile = getMudletHomeDir() .. "/LusterniaChatGaggedMobs.lua"
+if io.exists(gaggedMobFile) then
+  table.load(gaggedMobFile, LusterniaChatTabs.gaggedMobs)
+end
+
+function LusterniaChatTabs.loadGaggedMobs()
+  if io.exists(gaggedMobFile) then
+    table.load(gaggedMobFile, LusterniaChatTabs.gaggedMobs)
+  end
+end
+
+function LusterniaChatTabs.saveGaggedMobs()
+  table.save(gaggedMobFile, LusterniaChatTabs.gaggedMobs)
+end
+
+function LusterniaChatTabs.load()
+  LusterniaChatTabs.loadGaggedMobs()
+  if io.exists(filename) then
+    chatEMCO:load()
+  end
+end
+
+function LusterniaChatTabs.save()
+  chatEMCO:save()
+  LusterniaChatTabs.saveGaggedMobs()
+end
 
 local channelToTab = {
   ct = "Org",
@@ -71,6 +103,16 @@ end
 
 local function chatCapture()
   local info = gmcp.Comm.Channel.Text
+  local gaggedMobs = LusterniaChatTabs.gaggedMobs
+  local talker = info.talker
+  if gaggedMobs[talker] then
+    return
+  end
+  for pattern,_ in pairs(gaggedMobs) do
+    if talker:match(pattern) then
+      return
+    end
+  end
   local channel = "Misc"
   if info.channel:starts("tell ") then
     channel = "Tells"

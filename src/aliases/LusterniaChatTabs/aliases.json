@@ -2,5 +2,25 @@
   {
     "name": "lct",
     "regex": "^lct (save|load|font|fontSize|blink|blankLine|timestamp|show|hide)(?: (.+))?$"
+  },
+  {
+    "name": "lct gag",
+    "regex": "^lct gag (.+)"
+  },
+  {
+    "name": "lct ungag",
+    "regex": "^lct ungag (.+)"
+  },
+  {
+    "name": "lct gagmob",
+    "regex": "^lct gagmob (.+)"
+  },
+  {
+    "name": "lct ungagmob",
+    "regex": "^lct ungagmob (.+)"
+  },
+  {
+    "name": "lct gaglist",
+    "regex": "^lct gaglist$"
   }
 ]

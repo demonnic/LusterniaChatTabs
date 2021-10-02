@@ -3,28 +3,32 @@ local valid_options_string = table.concat(valid_options)
 local option = matches[2]
 local value = matches[3]
 if not table.contains(valid_options, option) then
-  cecho("<green>LusterniaChatTabs: <reset>Tried to change a config value that does not exist: valid options are " .. valid_options_string .. "\n")
+  lecho("Tried to change a config value that does not exist: valid options are " .. valid_options_string)
   return
 end
 local chatEMCO = LusterniaChatTabs.chatEMCO
+local lecho = LusterniaChatTabs.echo
 local EMCO = require("LusterniaChatTabs.emco")
+local gaggedMobFile = getMudletHomeDir() .. "LusterniaChatGaggedMobs.lua"
 if option == "save" then
-  chatEMCO:save()
+  LusterniaChatTabs.save()
+  lecho("Options saved")
 elseif option == "load" then
-  chatEMCO:load()
+  LusterniaChatTabs.load()
+  lecho("Options loaded")
 elseif option == "show" then
   LusterniaChatTabs.emcoContainer:show()
 elseif option == "hide" then
   LusterniaChatTabs.emcoContainer:hide()
 else
   if value == nil then
-    cecho("<green>LusterniaChatTabs: <reset>You need to provide a value when trying to configure things\n")
+    lecho("You need to provide a value when trying to configure things")
     return
   end
   if option == "font" then
     local validFont = table.contains(getAvailableFonts(), value)
     if not validFont then
-      cecho("<green>LusterniaChatTabs: <reset>You tried to set the font to one that Mudlet doesn't recognize. This will not do.")
+      lecho("You tried to set the font to one that Mudlet doesn't recognize. This will not do.")
     else
       chatEMCO:setFont(value)
     end
@@ -56,7 +60,7 @@ else
     if value then
       chatEMCO:setFontSize(value)
     else
-      cecho("<green>LusterniaChatTabs: <reset>You tried to set the fontSize to a nonnumber. Attempted: " .. matches[3] .. "\n")
+      lecho("You tried to set the fontSize to a nonnumber. Attempted: " .. matches[3])
     end
   end
 end
