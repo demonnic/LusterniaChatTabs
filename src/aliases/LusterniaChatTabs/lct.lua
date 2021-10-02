@@ -8,10 +8,13 @@ if not table.contains(valid_options, option) then
 end
 local chatEMCO = LusterniaChatTabs.chatEMCO
 local EMCO = require("LusterniaChatTabs.emco")
+local gaggedMobFile = getMudletHomeDir() .. "LusterniaChatGaggedMobs.lua"
 if option == "save" then
   chatEMCO:save()
+  table.save(gaggedMobFile, LusterniaChatTabs.gaggedMobs)
 elseif option == "load" then
   chatEMCO:load()
+  table.load(gaggedMobFile, LusterniaChatTabs.gaggedMobs)
 elseif option == "show" then
   LusterniaChatTabs.emcoContainer:show()
 elseif option == "hide" then

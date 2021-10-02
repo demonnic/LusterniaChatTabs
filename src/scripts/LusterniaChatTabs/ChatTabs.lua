@@ -26,6 +26,15 @@ if io.exists(filename) then
   chatEMCO:load()
 end
 chatEMCO:replayAll(10)
+function LusterniaChatTabs.echo(msg)
+  cecho(f"<green>LusterniaChatTabs: <reset>{msg}\n")
+end
+
+LusterniaChatTabs.gaggedMobs = {}
+local gaggedMobFile = getMudletHomeDir() .. "LusterniaChatGaggedMobs.lua"
+if io.exists(gaggedMobFile) then
+  table.load(gaggedMobFile, LusterniaChatTabs.gaggedMobs)
+end
 
 local channelToTab = {
   ct = "Org",
@@ -71,6 +80,16 @@ end
 
 local function chatCapture()
   local info = gmcp.Comm.Channel.Text
+  local gaggedMobs = LusterniaChatTabs.gaggedMobs
+  local talker = info.talker
+  if gaggedMobs[talker] then
+    return
+  end
+  for pattern,_ in pairs(gaggedMobs) do
+    if talker:match(pattern) then
+      return
+    end
+  end
   local channel = "Misc"
   if info.channel:starts("tell ") then
     channel = "Tells"

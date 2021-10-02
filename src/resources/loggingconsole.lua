@@ -434,6 +434,7 @@ function LoggingConsole:replay(numberOfLines)
         lines = lines:gsub(line .. "\n", "")
       end
     end
+    lines = lines:gsub("\n", "")
     lines = dt.html2decho(lines)
   else
     lines = ansi2decho(lines)
