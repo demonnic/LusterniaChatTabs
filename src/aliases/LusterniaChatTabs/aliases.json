@@ -22,5 +22,13 @@
   {
     "name": "lct gaglist",
     "regex": "^lct gaglist$"
+  },
+  {
+    "name": "lct notify",
+    "regex": "^lct notify (.*)"
+  },
+  {
+    "name": "lct unnotify",
+    "regex": "^lct unnotify (.*)"
   }
 ]
