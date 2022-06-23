@@ -38,7 +38,10 @@ local EMCO = Geyser.Container:new({
   wrapAt = 300,
   autoWrap = true,
   logExclusions = {},
+  logFormat = "h",
   gags = {},
+  notifyTabs = {},
+  notifyWithFocus = false,
 })
 
 -- patch Geyser.MiniConsole if it does not have its own display method defined
@@ -337,6 +340,16 @@ end
 --     <td class="tg-even">A table of Lua patterns you wish to gag from being added to the EMCO. Useful for removing mob says and such example: {[[^A green leprechaun says, ".*"$]], "^Bob The Dark Lord of the Keep mutters darkly to himself.$"} see <a href="http://lua-users.org/wiki/PatternsTutorial">this tutorial</a> on Lua patterns for more information.</td>
 --     <td class="tg-even">{}</td>
 --   </tr>
+--   <tr>
+--     <td class="tg-odd">notifyTabs</td>
+--     <td class="tg-odd">Tables containing the names of all tabs you want to send notifications. IE {"Says", "Tells", "Org"}</td>
+--     <td class="tg-odd">{}</td>
+--   </tr>
+--   <tr>
+--     <td class="tg-even">notifyWithFocus</td>
+--     <td class="tg-even">If true, EMCO will send notifications even if Mudlet has focus. If false, it will only send them when Mudlet does NOT have focus.</td>
+--     <td class="tg-even">false</td>
+--   </tr>
 -- </tbody>
 -- </table>
 -- @tparam GeyserObject container The container to use as the parent for the EMCO
@@ -440,6 +453,12 @@ function EMCO:new(cons, container)
   me.gags = {}
   for _,pattern in ipairs(cons.gags or {}) do
     me:addGag(pattern)
+  end
+  for _,tname in ipairs(cons.notifyTabs or {}) do
+    me:addNotifyTab(tname)
+  end
+  if me:fuzzyBoolean(cons.notifyWithFocus) then
+    self:enableNotifyWithFocus()
   end
   me:reset()
   if me.allTab then
@@ -687,6 +706,7 @@ function EMCO:createComponentsForTab(tabName)
     commandLine = self.commandLine,
     path = self:processTemplate(self.path, tabName),
     fileName = self:processTemplate(self.fileName, tabName),
+    logFormat = self.logFormat
   }
   if table.contains(self.logExclusions, tabName) then
     windowConstraints.log = false
@@ -1563,6 +1583,34 @@ function EMCO:checkEchoArgs(funcName, tabName, message, excludeAll)
   end
 end
 
+--- Adds a tab to the list of tabs to send OS toast/popup notifications for
+--@tparam tabName string the name of a tab to enable notifications for
+--@return true if it was added, false if it was already included, nil if the tab does not exist.
+function EMCO:addNotifyTab(tabName)
+  if not table.contains(self.consoles, tabName) then
+    return nil, "Tab does not exist"
+  end
+  if self.notifyTabs[tabName] then
+    return false
+  end
+  self.notifyTabs[tabName] = true
+  return true
+end
+
+--- Removes a tab from the list of tabs to send OS toast/popup notifications for
+--@tparam tabName string the name of a tab to disable notifications for
+--@return true if it was removed, false if it wasn't enabled to begin with, nil if the tab does not exist.
+function EMCO:removeNotifyTab(tabName)
+  if not table.contains(self.consoles, tabName) then
+    return nil, "Tab does not exist"
+  end
+  if not self.notifyTabs[tabName] then
+    return false
+  end
+  self.notifyTabs[tabName] = nil
+  return true
+end
+
 --- Adds a pattern to the gag list for the EMCO
 --@tparam pattern string a Lua pattern to gag. http://lua-users.org/wiki/PatternsTutorial
 --@return true if it was added, false if it was already included.
@@ -1595,6 +1643,35 @@ function EMCO:matchesGag(str)
     end
   end
   return false
+end
+
+--- Enables sending OS notifications even if Mudlet has focus
+function EMCO:enableNotifyWithFocus()
+  self.notifyWithFocus = true
+end
+
+--- Disables sending OS notifications if Mudlet has focus
+function EMCO:disableNotifyWithFocus()
+  self.notifyWithFocus = false
+end
+
+function EMCO:strip(message, xtype)
+  local strippers = {
+    a = function(msg) return msg end,
+    cecho = cecho2string,
+    decho = decho2string,
+    hecho = hecho2string,
+  }
+  local result = strippers[xtype](message)
+  return result
+end
+
+function EMCO:sendNotification(tabName, msg)
+  if self.notifyWithFocus or not hasFocus() then
+    if self.notifyTabs[tabName] then
+      showNotification(f'{self.name}:{tabName}', msg)
+    end
+  end
 end
 
 function EMCO:xEcho(tabName, message, xtype, excludeAll)
@@ -1659,6 +1736,8 @@ function EMCO:xEcho(tabName, message, xtype, excludeAll)
   end
   if xtype == "a" then
     console:appendBuffer()
+    local txt = self:strip(getCurrentLine(), xtype)
+    self:sendNotification(tabName, txt)
     if allTab then
       allTab:appendBuffer()
     end
@@ -1672,6 +1751,7 @@ function EMCO:xEcho(tabName, message, xtype, excludeAll)
     end
   else
     console[xtype](console, message)
+    self:sendNotification(tabName, self:strip(message, xtype))
     if allTab then
       allTab[xtype](allTab, message)
     end
