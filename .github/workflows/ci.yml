@@ -17,6 +17,8 @@ jobs:
 
       - name: Muddle
         uses: demonnic/build-with-muddler@set_working_dir
+        with:
+          workingDir: ${{ github.workspace }}/test
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
