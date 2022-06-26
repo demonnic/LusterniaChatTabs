@@ -23,5 +23,4 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: LusterniaChatTabs.mpackage
-          path: ${{ github.workspace }}/test/build/LusterniaChatTabs.mpackage
+          path: ${{ github.workspace }}/test/build/*.mpackage
