@@ -42,3 +42,11 @@ Will start on the right side, attached to the right border. Resize, move, adjust
       * will gag anyone shouting "I love cheese!"
 * `lct ungag <Lua pattern>`
   * removes a lua pattern from the gagged lines list.
+* `lct notify <tab name>`
+  * will send OS notifications when somethings is written to the tab specified
+    * `lct notify guild`
+      * sends OS notifications whenever something comes in on the Guild tab
+* `lct unnotify <tab name>`
+  * Stop sending OS notifications for a tab
+   * `lct unnotify guild`
+    * stop sending OS notifications when something comes in on the Guild tab
